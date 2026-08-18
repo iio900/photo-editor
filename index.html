@@ -45,12 +45,11 @@
   .presets-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .preset-btn { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 6px; color: #fff; font-size: 12px; cursor: pointer; transition: all 0.2s; text-align: center; }
   .preset-btn:hover, .preset-btn.active { background: #7c6af7; border-color: #7c6af7; }
-  .buttons { display: none; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .buttons { display: none; gap: 10px; margin-bottom: 16px; }
   .buttons.visible { display: flex; }
   .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
   .btn-reset { background: rgba(255,255,255,0.1); color: #fff; }
-  .btn-send { background: #7c6af7; color: #fff; }
-  .btn-save { background: #22c55e; color: #fff; }
+  .btn-save { background: #7c6af7; color: #fff; }
   .btn:active { transform: scale(0.97); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .status { text-align: center; font-size: 14px; padding: 12px; border-radius: 10px; margin-top: 8px; display: none; }
@@ -114,9 +113,8 @@
 </div>
 
 <div class="buttons" id="buttons">
-  <button class="btn btn-reset" id="resetBtn" onclick="resetAll()">↺ إعادة تعيين</button>
+  <button class="btn btn-reset" onclick="resetAll()">↺ إعادة تعيين</button>
   <button class="btn btn-save" id="saveBtn" onclick="saveImage()">💾 حفظ الصورة</button>
-  <button class="btn btn-send" id="sendBtn" onclick="sendImage()">✉️ إرسال للبوت</button>
 </div>
 
 <div class="status" id="status"></div>
@@ -126,10 +124,6 @@
   tg.ready();
   tg.expand();
 
-  // ✅ عنوان سيرفرك على fly.io - غيّر photo-editor-bot لاسم تطبيقك
-  const SERVER_URL = "https://photo-editor-bot.fly.dev/send";
-
-  const chatId = tg.initDataUnsafe?.user?.id;
   let originalImage = null;
 
   document.getElementById('fileInput').addEventListener('change', function(e) {
@@ -195,8 +189,7 @@
     s.className = 'status show ' + type;
   }
 
-  function saveImage() {
-    if (!originalImage) return;
+  function getEditedDataUrl() {
     const offscreen = document.createElement('canvas');
     offscreen.width  = originalImage.width;
     offscreen.height = originalImage.height;
@@ -209,65 +202,34 @@
     const g  = document.getElementById('grayscale').value;
     ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) blur(${bl}px) grayscale(${g}%)`;
     ctx.drawImage(originalImage, 0, 0);
-    const dataUrl = offscreen.toDataURL('image/jpeg', 0.92);
-    // على موبايل تيليغرام: فتح الصورة بتاب جديد → المستخدم يضغط مطولاً ويحفظ
-    const newTab = window.open(dataUrl, '_blank');
-    if (!newTab) {
-      // fallback: تحميل مباشر لو انبلوك الـ popup
+    return offscreen.toDataURL('image/jpeg', 0.92);
+  }
+
+  function saveImage() {
+    if (!originalImage) return;
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    showStatus('⏳ جاري تحضير الصورة...', 'loading');
+
+    try {
+      const dataUrl = getEditedDataUrl();
+
+      // محاولة التحميل المباشر أولاً
       const link = document.createElement('a');
       link.download = 'edited.jpg';
       link.href = dataUrl;
       link.click();
-    }
-    showStatus('📱 اضغط على الصورة مطولاً واختر "حفظ"', 'success');
-  }
 
-  async function sendImage() {
-    if (!originalImage) return;
-    const sendBtn = document.getElementById('sendBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    sendBtn.disabled = resetBtn.disabled = true;
-    showStatus('⏳ جاري تحضير الصورة...', 'loading');
-
-    try {
-      const offscreen = document.createElement('canvas');
-      offscreen.width  = originalImage.width;
-      offscreen.height = originalImage.height;
-      const ctx = offscreen.getContext('2d');
-      const b  = document.getElementById('brightness').value;
-      const c  = document.getElementById('contrast').value;
-      const s  = document.getElementById('saturation').value;
-      const h  = document.getElementById('hue').value;
-      const bl = document.getElementById('blur').value;
-      const g  = document.getElementById('grayscale').value;
-      ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) blur(${bl}px) grayscale(${g}%)`;
-      ctx.drawImage(originalImage, 0, 0);
-
-      offscreen.toBlob(async (blob) => {
-        try {
-          showStatus('📤 جاري الإرسال...', 'loading');
-          const formData = new FormData();
-          formData.append('chat_id', chatId);
-          formData.append('photo', blob, 'edited.jpg');
-
-          const res  = await fetch(SERVER_URL, { method: 'POST', body: formData });
-          const data = await res.json();
-
-          if (data.ok) {
-            showStatus('✅ تم الإرسال!', 'success');
-            setTimeout(() => tg.close(), 1500);
-          } else {
-            throw new Error(data.error || 'خطأ غير معروف');
-          }
-        } catch(err) {
-          showStatus('❌ ' + err.message, 'error');
-          sendBtn.disabled = resetBtn.disabled = false;
-        }
-      }, 'image/jpeg', 0.92);
+      // fallback: فتح الصورة بتاب جديد لو ما نفع التحميل
+      setTimeout(() => {
+        showStatus('✅ تم! لو ما تحملت تلقائياً، اضغط مطولاً على الصورة واحفظها', 'success');
+        window.open(dataUrl, '_blank');
+        saveBtn.disabled = false;
+      }, 500);
 
     } catch(err) {
       showStatus('❌ ' + err.message, 'error');
-      sendBtn.disabled = resetBtn.disabled = false;
+      saveBtn.disabled = false;
     }
   }
 
