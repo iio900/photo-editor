@@ -212,20 +212,31 @@
     showStatus('⏳ جاري تحضير الصورة...', 'loading');
 
     try {
-      const dataUrl = getEditedDataUrl();
+      const offscreen = document.createElement('canvas');
+      offscreen.width  = originalImage.width;
+      offscreen.height = originalImage.height;
+      const ctx = offscreen.getContext('2d');
+      const b  = document.getElementById('brightness').value;
+      const c  = document.getElementById('contrast').value;
+      const s  = document.getElementById('saturation').value;
+      const h  = document.getElementById('hue').value;
+      const bl = document.getElementById('blur').value;
+      const g  = document.getElementById('grayscale').value;
+      ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) blur(${bl}px) grayscale(${g}%)`;
+      ctx.drawImage(originalImage, 0, 0);
 
-      // محاولة التحميل المباشر أولاً
-      const link = document.createElement('a');
-      link.download = 'edited.jpg';
-      link.href = dataUrl;
-      link.click();
-
-      // fallback: فتح الصورة بتاب جديد لو ما نفع التحميل
-      setTimeout(() => {
-        showStatus('✅ تم! لو ما تحملت تلقائياً، اضغط مطولاً على الصورة واحفظها', 'success');
-        window.open(dataUrl, '_blank');
+      offscreen.toBlob(blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = 'edited.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        showStatus('✅ تم التحميل!', 'success');
         saveBtn.disabled = false;
-      }, 500);
+      }, 'image/jpeg', 0.92);
 
     } catch(err) {
       showStatus('❌ ' + err.message, 'error');
