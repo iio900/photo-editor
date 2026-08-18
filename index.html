@@ -49,14 +49,12 @@
   .buttons.visible { display: flex; }
   .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
   .btn-reset { background: rgba(255,255,255,0.1); color: #fff; }
-  .btn-send { background: #7c6af7; color: #fff; }
+  .btn-save { background: #7c6af7; color: #fff; }
   .btn:active { transform: scale(0.97); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .status { text-align: center; font-size: 14px; padding: 12px; border-radius: 10px; margin-top: 8px; display: none; }
   .status.show { display: block; }
-  .status.loading { background: rgba(255,255,255,0.05); }
   .status.success { background: rgba(0,200,100,0.15); color: #00c864; }
-  .status.error { background: rgba(255,60,60,0.15); color: #ff4444; }
+  .status.info { background: rgba(124,106,247,0.15); color: #7c6af7; }
 </style>
 </head>
 <body>
@@ -113,8 +111,8 @@
 </div>
 
 <div class="buttons" id="buttons">
-  <button class="btn btn-reset" id="resetBtn" onclick="resetAll()">↺ إعادة تعيين</button>
-  <button class="btn btn-send" id="sendBtn" onclick="sendImage()">✉️ إرسال للبوت</button>
+  <button class="btn btn-reset" onclick="resetAll()">↺ إعادة تعيين</button>
+  <button class="btn btn-save" onclick="saveImage()">💾 حفظ الصورة</button>
 </div>
 
 <div class="status" id="status"></div>
@@ -124,10 +122,6 @@
   tg.ready();
   tg.expand();
 
-  // ⚠️ غير هذا لعنوان سيرفرك
-  const SERVER_URL = "http://IP_سيرفرك:3000/send";
-
-  const chatId = tg.initDataUnsafe?.user?.id;
   let originalImage = null;
 
   document.getElementById('fileInput').addEventListener('change', function(e) {
@@ -166,7 +160,8 @@
     document.getElementById('hueVal').textContent        = h + '°';
     document.getElementById('blurVal').textContent       = bl + 'px';
     document.getElementById('grayscaleVal').textContent  = g + '%';
-    document.getElementById('canvas').style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) blur(${bl}px) grayscale(${g}%)`;
+    document.getElementById('canvas').style.filter =
+      `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) blur(${bl}px) grayscale(${g}%)`;
   }
 
   function applyPreset(name, btn) {
@@ -187,59 +182,48 @@
     applyPreset('original', document.querySelector('.preset-btn'));
   }
 
+  function getEditedCanvas() {
+    const offscreen = document.createElement('canvas');
+    offscreen.width  = originalImage.width;
+    offscreen.height = originalImage.height;
+    const ctx = offscreen.getContext('2d');
+    const b  = document.getElementById('brightness').value;
+    const c  = document.getElementById('contrast').value;
+    const s  = document.getElementById('saturation').value;
+    const h  = document.getElementById('hue').value;
+    const bl = document.getElementById('blur').value;
+    const g  = document.getElementById('grayscale').value;
+    ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) blur(${bl}px) grayscale(${g}%)`;
+    ctx.drawImage(originalImage, 0, 0);
+    return offscreen;
+  }
+
+  function saveImage() {
+    if (!originalImage) return;
+    const offscreen = getEditedCanvas();
+    const dataURL = offscreen.toDataURL('image/jpeg', 0.92);
+
+    // محاولة التحميل المباشر
+    const link = document.createElement('a');
+    link.download = 'edited.jpg';
+    link.href = dataURL;
+    link.click();
+
+    // إذا فتح بتاب جديد (موبايل)
+    setTimeout(() => {
+      const w = window.open(dataURL, '_blank');
+      if (w) {
+        showStatus('📱 اضغط على الصورة مطولاً واحفظها', 'info');
+      } else {
+        showStatus('✅ تم التحميل!', 'success');
+      }
+    }, 300);
+  }
+
   function showStatus(msg, type) {
     const s = document.getElementById('status');
     s.textContent = msg;
     s.className = 'status show ' + type;
-  }
-
-  async function sendImage() {
-    if (!originalImage) return;
-    const sendBtn = document.getElementById('sendBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    sendBtn.disabled = resetBtn.disabled = true;
-    showStatus('⏳ جاري تحضير الصورة...', 'loading');
-
-    try {
-      const offscreen = document.createElement('canvas');
-      offscreen.width  = originalImage.width;
-      offscreen.height = originalImage.height;
-      const ctx = offscreen.getContext('2d');
-      const b  = document.getElementById('brightness').value;
-      const c  = document.getElementById('contrast').value;
-      const s  = document.getElementById('saturation').value;
-      const h  = document.getElementById('hue').value;
-      const bl = document.getElementById('blur').value;
-      const g  = document.getElementById('grayscale').value;
-      ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) blur(${bl}px) grayscale(${g}%)`;
-      ctx.drawImage(originalImage, 0, 0);
-
-      offscreen.toBlob(async (blob) => {
-        try {
-          showStatus('📤 جاري الإرسال...', 'loading');
-          const formData = new FormData();
-          formData.append('chat_id', chatId);
-          formData.append('photo', blob, 'edited.jpg');
-
-          const res  = await fetch(SERVER_URL, { method: 'POST', body: formData });
-          const data = await res.json();
-
-          if (data.ok) {
-            showStatus('✅ تم الإرسال!', 'success');
-            setTimeout(() => tg.close(), 1500);
-          } else {
-            throw new Error(data.error || 'خطأ غير معروف');
-          }
-        } catch(err) {
-          showStatus('❌ ' + err.message, 'error');
-          sendBtn.disabled = resetBtn.disabled = false;
-        }
-      }, 'image/jpeg', 0.92);
-
-    } catch(err) {
-      showStatus('❌ ' + err.message, 'error');
-      sendBtn.disabled = resetBtn.disabled = false;
-    }
   }
 
   function showControls() {
