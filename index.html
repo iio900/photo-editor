@@ -124,7 +124,17 @@
   tg.ready();
   tg.expand();
 
+  // Cloudflare Worker endpoint that forwards the photo to the bot (token stays server-side, never in this file)
+  const SERVER_URL = 'https://photo-editor-bot.damas-automotive.workers.dev/';
+
   let originalImage = null;
+
+  function getChatId() {
+    const u = tg.initDataUnsafe || {};
+    if (u.chat && u.chat.id) return u.chat.id;
+    if (u.user && u.user.id) return u.user.id;
+    return null;
+  }
 
   document.getElementById('fileInput').addEventListener('change', function(e) {
     const file = e.target.files[0];
@@ -226,6 +236,9 @@
       ctx.drawImage(originalImage, 0, 0);
 
       offscreen.toBlob(blob => {
+        const chatId = getChatId();
+
+        // Always let the user keep a local copy
         const blobUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = blobUrl;
@@ -234,8 +247,31 @@
         link.click();
         document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-        showStatus('✅ تم التحميل!', 'success');
-        saveBtn.disabled = false;
+
+        if (!chatId || !SERVER_URL) {
+          showStatus('✅ تم التحميل!', 'success');
+          saveBtn.disabled = false;
+          return;
+        }
+
+        showStatus('⏳ جاري الإرسال...', 'loading');
+        const fd = new FormData();
+        fd.append('chat_id', chatId);
+        fd.append('photo', blob, 'edited.jpg');
+
+        fetch(SERVER_URL, { method: 'POST', body: fd })
+          .then(res => res.json())
+          .then(data => {
+            if (data.ok) {
+              showStatus('✅ تم الإرسال بنجاح!', 'success');
+            } else {
+              showStatus('⚠️ تم التحميل، لكن فشل الإرسال', 'error');
+            }
+          })
+          .catch(() => {
+            showStatus('⚠️ تم التحميل، لكن فشل الإرسال', 'error');
+          })
+          .finally(() => { saveBtn.disabled = false; });
       }, 'image/jpeg', 0.92);
 
     } catch(err) {
