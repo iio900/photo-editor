@@ -7,7 +7,6 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--tg-theme-bg-color, #1a1a2e);
@@ -15,7 +14,6 @@
     min-height: 100vh;
     padding: 16px;
   }
-
   .upload-area {
     border: 2px dashed rgba(255,255,255,0.2);
     border-radius: 16px;
@@ -25,278 +23,121 @@
     transition: all 0.3s;
     margin-bottom: 20px;
   }
-
   .upload-area:hover { border-color: #7c6af7; background: rgba(124,106,247,0.05); }
   .upload-area.hidden { display: none; }
-
   .upload-icon { font-size: 48px; margin-bottom: 12px; }
   .upload-text { font-size: 16px; opacity: 0.7; }
-
   #fileInput { display: none; }
-
-  .canvas-container {
-    display: none;
-    border-radius: 16px;
-    overflow: hidden;
-    margin-bottom: 20px;
-    background: #000;
-    text-align: center;
-  }
-
+  .canvas-container { display: none; border-radius: 16px; overflow: hidden; margin-bottom: 20px; background: #000; text-align: center; }
   .canvas-container.visible { display: block; }
-
-  #canvas {
-    max-width: 100%;
-    max-height: 300px;
-    object-fit: contain;
-  }
-
-  .controls {
-    display: none;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-
+  #canvas { max-width: 100%; max-height: 300px; object-fit: contain; }
+  .controls { display: none; flex-direction: column; gap: 16px; margin-bottom: 20px; }
   .controls.visible { display: flex; }
-
-  .control-group {
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
-    padding: 14px;
-  }
-
-  .control-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .control-label {
-    font-size: 14px;
-    font-weight: 600;
-    opacity: 0.9;
-  }
-
-  .control-value {
-    font-size: 13px;
-    color: #7c6af7;
-    font-weight: 700;
-    min-width: 45px;
-    text-align: left;
-  }
-
-  input[type="range"] {
-    width: 100%;
-    height: 6px;
-    -webkit-appearance: none;
-    background: rgba(255,255,255,0.15);
-    border-radius: 3px;
-    outline: none;
-    cursor: pointer;
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #7c6af7;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(124,106,247,0.5);
-  }
-
-  .presets {
-    display: none;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-
+  .control-group { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; }
+  .control-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .control-label { font-size: 14px; font-weight: 600; opacity: 0.9; }
+  .control-value { font-size: 13px; color: #7c6af7; font-weight: 700; min-width: 45px; text-align: left; }
+  input[type="range"] { width: 100%; height: 6px; -webkit-appearance: none; background: rgba(255,255,255,0.15); border-radius: 3px; outline: none; cursor: pointer; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #7c6af7; cursor: pointer; box-shadow: 0 2px 8px rgba(124,106,247,0.5); }
+  .presets { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; }
   .presets.visible { display: flex; }
-
-  .presets-title {
-    font-size: 14px;
-    font-weight: 600;
-    opacity: 0.6;
-    margin-bottom: 4px;
-  }
-
-  .presets-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
-
-  .preset-btn {
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 10px 6px;
-    color: #fff;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-  }
-
-  .preset-btn:hover, .preset-btn.active {
-    background: #7c6af7;
-    border-color: #7c6af7;
-  }
-
-  .buttons {
-    display: none;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
+  .presets-title { font-size: 14px; font-weight: 600; opacity: 0.6; margin-bottom: 4px; }
+  .presets-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .preset-btn { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 6px; color: #fff; font-size: 12px; cursor: pointer; transition: all 0.2s; text-align: center; }
+  .preset-btn:hover, .preset-btn.active { background: #7c6af7; border-color: #7c6af7; }
+  .buttons { display: none; gap: 10px; margin-bottom: 16px; }
   .buttons.visible { display: flex; }
-
-  .btn {
-    flex: 1;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-reset {
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-  }
-
-  .btn-send {
-    background: #7c6af7;
-    color: #fff;
-  }
-
+  .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-reset { background: rgba(255,255,255,0.1); color: #fff; }
+  .btn-send { background: #7c6af7; color: #fff; }
   .btn:active { transform: scale(0.97); }
-
-  .status {
-    text-align: center;
-    font-size: 13px;
-    opacity: 0.6;
-    padding: 10px;
-  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status { text-align: center; font-size: 14px; padding: 12px; border-radius: 10px; margin-top: 8px; display: none; }
+  .status.show { display: block; }
+  .status.loading { background: rgba(255,255,255,0.05); }
+  .status.success { background: rgba(0,200,100,0.15); color: #00c864; }
+  .status.error { background: rgba(255,60,60,0.15); color: #ff4444; }
 </style>
 </head>
 <body>
 
-<!-- منطقة رفع الصورة -->
 <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
   <div class="upload-icon">🖼️</div>
   <div class="upload-text">اضغط لاختيار صورة</div>
   <input type="file" id="fileInput" accept="image/*">
 </div>
 
-<!-- عرض الصورة -->
 <div class="canvas-container" id="canvasContainer">
   <canvas id="canvas"></canvas>
 </div>
 
-<!-- الفلاتر السريعة -->
 <div class="presets" id="presets">
   <div class="presets-title">فلاتر سريعة</div>
   <div class="presets-grid">
-    <button class="preset-btn active" onclick="applyPreset('original')">عادي</button>
-    <button class="preset-btn" onclick="applyPreset('vivid')">حيوي</button>
-    <button class="preset-btn" onclick="applyPreset('warm')">دافئ</button>
-    <button class="preset-btn" onclick="applyPreset('cool')">بارد</button>
-    <button class="preset-btn" onclick="applyPreset('bw')">أبيض وأسود</button>
-    <button class="preset-btn" onclick="applyPreset('dramatic')">دراماتيك</button>
-    <button class="preset-btn" onclick="applyPreset('vintage')">كلاسيك</button>
-    <button class="preset-btn" onclick="applyPreset('fade')">فيد</button>
+    <button class="preset-btn active" onclick="applyPreset('original',this)">عادي</button>
+    <button class="preset-btn" onclick="applyPreset('vivid',this)">حيوي</button>
+    <button class="preset-btn" onclick="applyPreset('warm',this)">دافئ</button>
+    <button class="preset-btn" onclick="applyPreset('cool',this)">بارد</button>
+    <button class="preset-btn" onclick="applyPreset('bw',this)">أبيض وأسود</button>
+    <button class="preset-btn" onclick="applyPreset('dramatic',this)">دراماتيك</button>
+    <button class="preset-btn" onclick="applyPreset('vintage',this)">كلاسيك</button>
+    <button class="preset-btn" onclick="applyPreset('fade',this)">فيد</button>
   </div>
 </div>
 
-<!-- أدوات التحكم -->
 <div class="controls" id="controls">
-
   <div class="control-group">
-    <div class="control-header">
-      <span class="control-label">☀️ السطوع</span>
-      <span class="control-value" id="brightnessVal">100%</span>
-    </div>
+    <div class="control-header"><span class="control-label">☀️ السطوع</span><span class="control-value" id="brightnessVal">100%</span></div>
     <input type="range" id="brightness" min="0" max="200" value="100" oninput="updateFilter()">
   </div>
-
   <div class="control-group">
-    <div class="control-header">
-      <span class="control-label">🎭 التباين</span>
-      <span class="control-value" id="contrastVal">100%</span>
-    </div>
+    <div class="control-header"><span class="control-label">🎭 التباين</span><span class="control-value" id="contrastVal">100%</span></div>
     <input type="range" id="contrast" min="0" max="200" value="100" oninput="updateFilter()">
   </div>
-
   <div class="control-group">
-    <div class="control-header">
-      <span class="control-label">🎨 التشبع</span>
-      <span class="control-value" id="saturationVal">100%</span>
-    </div>
+    <div class="control-header"><span class="control-label">🎨 التشبع</span><span class="control-value" id="saturationVal">100%</span></div>
     <input type="range" id="saturation" min="0" max="200" value="100" oninput="updateFilter()">
   </div>
-
   <div class="control-group">
-    <div class="control-header">
-      <span class="control-label">🌡️ درجة الحرارة</span>
-      <span class="control-value" id="hueVal">0°</span>
-    </div>
+    <div class="control-header"><span class="control-label">🌡️ درجة اللون</span><span class="control-value" id="hueVal">0°</span></div>
     <input type="range" id="hue" min="-180" max="180" value="0" oninput="updateFilter()">
   </div>
-
   <div class="control-group">
-    <div class="control-header">
-      <span class="control-label">🌫️ ضبابية</span>
-      <span class="control-value" id="blurVal">0px</span>
-    </div>
+    <div class="control-header"><span class="control-label">🌫️ ضبابية</span><span class="control-value" id="blurVal">0px</span></div>
     <input type="range" id="blur" min="0" max="10" value="0" step="0.1" oninput="updateFilter()">
   </div>
-
   <div class="control-group">
-    <div class="control-header">
-      <span class="control-label">⬛ تدرج رمادي</span>
-      <span class="control-value" id="grayscaleVal">0%</span>
-    </div>
+    <div class="control-header"><span class="control-label">⬛ تدرج رمادي</span><span class="control-value" id="grayscaleVal">0%</span></div>
     <input type="range" id="grayscale" min="0" max="100" value="0" oninput="updateFilter()">
   </div>
-
 </div>
 
-<!-- أزرار -->
 <div class="buttons" id="buttons">
-  <button class="btn btn-reset" onclick="resetAll()">↺ إعادة تعيين</button>
-  <button class="btn btn-send" onclick="sendImage()">✉️ إرسال</button>
+  <button class="btn btn-reset" id="resetBtn" onclick="resetAll()">↺ إعادة تعيين</button>
+  <button class="btn btn-send" id="sendBtn" onclick="sendImage()">✉️ إرسال للبوت</button>
 </div>
 
 <div class="status" id="status"></div>
 
 <script>
-  // تهيئة تيليغرام
   const tg = window.Telegram.WebApp;
   tg.ready();
   tg.expand();
 
+  // ⚠️ غير هذا لعنوان سيرفرك
+  const SERVER_URL = "http://IP_سيرفرك:3000/send";
+
+  const chatId = tg.initDataUnsafe?.user?.id;
   let originalImage = null;
 
-  // رفع الصورة
   document.getElementById('fileInput').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = ev => {
       const img = new Image();
-      img.onload = function() {
-        originalImage = img;
-        drawImage();
-        showControls();
-      };
-      img.src = event.target.result;
+      img.onload = () => { originalImage = img; drawImage(); showControls(); };
+      img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
   });
@@ -304,87 +145,101 @@
   function drawImage() {
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-
-    // ضبط حجم الكانفاس
-    const maxW = window.innerWidth - 32;
-    const maxH = 300;
-    let w = originalImage.width;
-    let h = originalImage.height;
-
+    const maxW = window.innerWidth - 32, maxH = 300;
+    let w = originalImage.width, h = originalImage.height;
     if (w > maxW) { h = h * maxW / w; w = maxW; }
     if (h > maxH) { w = w * maxH / h; h = maxH; }
-
-    canvas.width = w;
-    canvas.height = h;
+    canvas.width = w; canvas.height = h;
     ctx.drawImage(originalImage, 0, 0, w, h);
   }
 
   function updateFilter() {
-    const brightness = document.getElementById('brightness').value;
-    const contrast = document.getElementById('contrast').value;
-    const saturation = document.getElementById('saturation').value;
-    const hue = document.getElementById('hue').value;
-    const blur = document.getElementById('blur').value;
-    const grayscale = document.getElementById('grayscale').value;
-
-    // تحديث القيم المعروضة
-    document.getElementById('brightnessVal').textContent = brightness + '%';
-    document.getElementById('contrastVal').textContent = contrast + '%';
-    document.getElementById('saturationVal').textContent = saturation + '%';
-    document.getElementById('hueVal').textContent = hue + '°';
-    document.getElementById('blurVal').textContent = blur + 'px';
-    document.getElementById('grayscaleVal').textContent = grayscale + '%';
-
-    // تطبيق الفلاتر
-    const canvas = document.getElementById('canvas');
-    canvas.style.filter = `
-      brightness(${brightness}%)
-      contrast(${contrast}%)
-      saturate(${saturation}%)
-      hue-rotate(${hue}deg)
-      blur(${blur}px)
-      grayscale(${grayscale}%)
-    `;
+    const b  = document.getElementById('brightness').value;
+    const c  = document.getElementById('contrast').value;
+    const s  = document.getElementById('saturation').value;
+    const h  = document.getElementById('hue').value;
+    const bl = document.getElementById('blur').value;
+    const g  = document.getElementById('grayscale').value;
+    document.getElementById('brightnessVal').textContent = b + '%';
+    document.getElementById('contrastVal').textContent   = c + '%';
+    document.getElementById('saturationVal').textContent = s + '%';
+    document.getElementById('hueVal').textContent        = h + '°';
+    document.getElementById('blurVal').textContent       = bl + 'px';
+    document.getElementById('grayscaleVal').textContent  = g + '%';
+    document.getElementById('canvas').style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) blur(${bl}px) grayscale(${g}%)`;
   }
 
-  function applyPreset(name) {
-    // إزالة التحديد عن الكل
+  function applyPreset(name, btn) {
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-
-    const presets = {
-      original:  { b: 100, c: 100, s: 100, h: 0,   bl: 0, g: 0  },
-      vivid:     { b: 110, c: 130, s: 180, h: 0,   bl: 0, g: 0  },
-      warm:      { b: 105, c: 110, s: 120, h: 20,  bl: 0, g: 0  },
-      cool:      { b: 100, c: 110, s: 110, h: -20, bl: 0, g: 0  },
-      bw:        { b: 100, c: 120, s: 0,   h: 0,   bl: 0, g: 100},
-      dramatic:  { b: 90,  c: 160, s: 80,  h: 0,   bl: 0, g: 0  },
-      vintage:   { b: 95,  c: 90,  s: 70,  h: 15,  bl: 0, g: 20 },
-      fade:      { b: 110, c: 80,  s: 70,  h: 0,   bl: 0, g: 0  },
-    };
-
-    const p = presets[name];
-    document.getElementById('brightness').value = p.b;
-    document.getElementById('contrast').value = p.c;
-    document.getElementById('saturation').value = p.s;
-    document.getElementById('hue').value = p.h;
-    document.getElementById('blur').value = p.bl;
-    document.getElementById('grayscale').value = p.g;
+    btn.classList.add('active');
+    const p = {
+      original:[100,100,100,0,0,0], vivid:[110,130,180,0,0,0],
+      warm:[105,110,120,20,0,0],    cool:[100,110,110,-20,0,0],
+      bw:[100,120,0,0,0,100],       dramatic:[90,160,80,0,0,0],
+      vintage:[95,90,70,15,0,20],   fade:[110,80,70,0,0,0],
+    }[name];
+    ['brightness','contrast','saturation','hue','blur','grayscale']
+      .forEach((id,i) => document.getElementById(id).value = p[i]);
     updateFilter();
   }
 
   function resetAll() {
-    document.getElementById('brightness').value = 100;
-    document.getElementById('contrast').value = 100;
-    document.getElementById('saturation').value = 100;
-    document.getElementById('hue').value = 0;
-    document.getElementById('blur').value = 0;
-    document.getElementById('grayscale').value = 0;
-    document.getElementById('canvas').style.filter = 'none';
-    updateFilter();
+    applyPreset('original', document.querySelector('.preset-btn'));
+  }
 
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('.preset-btn').classList.add('active');
+  function showStatus(msg, type) {
+    const s = document.getElementById('status');
+    s.textContent = msg;
+    s.className = 'status show ' + type;
+  }
+
+  async function sendImage() {
+    if (!originalImage) return;
+    const sendBtn = document.getElementById('sendBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    sendBtn.disabled = resetBtn.disabled = true;
+    showStatus('⏳ جاري تحضير الصورة...', 'loading');
+
+    try {
+      const offscreen = document.createElement('canvas');
+      offscreen.width  = originalImage.width;
+      offscreen.height = originalImage.height;
+      const ctx = offscreen.getContext('2d');
+      const b  = document.getElementById('brightness').value;
+      const c  = document.getElementById('contrast').value;
+      const s  = document.getElementById('saturation').value;
+      const h  = document.getElementById('hue').value;
+      const bl = document.getElementById('blur').value;
+      const g  = document.getElementById('grayscale').value;
+      ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) blur(${bl}px) grayscale(${g}%)`;
+      ctx.drawImage(originalImage, 0, 0);
+
+      offscreen.toBlob(async (blob) => {
+        try {
+          showStatus('📤 جاري الإرسال...', 'loading');
+          const formData = new FormData();
+          formData.append('chat_id', chatId);
+          formData.append('photo', blob, 'edited.jpg');
+
+          const res  = await fetch(SERVER_URL, { method: 'POST', body: formData });
+          const data = await res.json();
+
+          if (data.ok) {
+            showStatus('✅ تم الإرسال!', 'success');
+            setTimeout(() => tg.close(), 1500);
+          } else {
+            throw new Error(data.error || 'خطأ غير معروف');
+          }
+        } catch(err) {
+          showStatus('❌ ' + err.message, 'error');
+          sendBtn.disabled = resetBtn.disabled = false;
+        }
+      }, 'image/jpeg', 0.92);
+
+    } catch(err) {
+      showStatus('❌ ' + err.message, 'error');
+      sendBtn.disabled = resetBtn.disabled = false;
+    }
   }
 
   function showControls() {
@@ -393,47 +248,6 @@
     document.getElementById('presets').classList.add('visible');
     document.getElementById('controls').classList.add('visible');
     document.getElementById('buttons').classList.add('visible');
-  }
-
-  function sendImage() {
-    const status = document.getElementById('status');
-    status.textContent = '⏳ جاري تحضير الصورة...';
-
-    // رسم الصورة مع الفلاتر على كانفاس جديد
-    const srcCanvas = document.getElementById('canvas');
-    const offscreen = document.createElement('canvas');
-    offscreen.width = originalImage.width;
-    offscreen.height = originalImage.height;
-    const ctx = offscreen.getContext('2d');
-
-    // تطبيق الفلاتر على الكانفاس
-    const brightness = document.getElementById('brightness').value;
-    const contrast = document.getElementById('contrast').value;
-    const saturation = document.getElementById('saturation').value;
-    const hue = document.getElementById('hue').value;
-    const blur = document.getElementById('blur').value;
-    const grayscale = document.getElementById('grayscale').value;
-
-    ctx.filter = `
-      brightness(${brightness}%)
-      contrast(${contrast}%)
-      saturate(${saturation}%)
-      hue-rotate(${hue}deg)
-      blur(${blur}px)
-      grayscale(${grayscale}%)
-    `;
-
-    ctx.drawImage(originalImage, 0, 0);
-
-    // تحويل لـ base64 وإرسال لتيليغرام
-    const imageData = offscreen.toDataURL('image/jpeg', 0.92);
-
-    tg.sendData(JSON.stringify({
-      type: 'edited_image',
-      image: imageData
-    }));
-
-    status.textContent = '✅ تم الإرسال!';
   }
 </script>
 </body>
